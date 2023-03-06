@@ -351,7 +351,7 @@ app.get("/user/tweets/", authenticationToken, async (request, response) => {
   const tweet_tweetDateQuery = `select tweet, date_time from tweet where tweet_id IN (${getTweetIds});`;
   const tweet_tweetDate = await database.all(tweet_tweetDateQuery);
   //console.log(tweet_tweetDate);
-  response.send(api6Output(tweet_tweetDate, likes_count, reply_count));
+  response.send(api9Output(tweet_tweetDate, likes_count, reply_count));
 });
 
 //api10
