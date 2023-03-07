@@ -322,37 +322,34 @@ app.get(
 );
 
 //api9
-const api9Output = (tweetData, likesCount, replyCount) => {
-  return {
-    tweet: tweetData.tweet,
-    likes: likesCount.likes,
-    replies: replyCount.replies,
-    dateTime: tweetData.date_time,
-  };
-};
 app.get("/user/tweets/", authenticationToken, async (request, response) => {
   let { username } = request;
   const getUserIdQuery = `select user_id from user where username='${username}';`;
   const getUserId = await database.get(getUserIdQuery);
   console.log(getUserId);
   //get tweets made by user
-  const getTweetIdsQuery = `select tweet_id from tweet where user_id=${getUserId.user_id};`;
-  const getTweetIdsArray = await database.all(getTweetIdsQuery);
-  const getTweetIds = getTweetIdsArray.map((eachId) => {
-    return parseInt(eachId.tweet_id);
-  });
-  console.log(getTweetIds);
-  const likes_count_query = `select count(user_id) as likes from like where tweet_id IN (${getTweetIds});`;
-  const likes_count = await database.all(likes_count_query);
-  //console.log(likes_count);
-  const reply_count_query = `select count(user_id) as replies from reply where tweet_id IN (${getTweetIds});`;
-  const reply_count = await database.all(reply_count_query);
-  // console.log(reply_count);
-  const tweet_tweetDateQuery = `select tweet, date_time from tweet where tweet_id IN (${getTweetIds});`;
-  const tweet_tweetDate = await database.all(tweet_tweetDateQuery);
   //console.log(tweet_tweetDate);
-  response.send(api9Output(tweet_tweetDate, likes_count, reply_count));
+  const tweetsQuery = `
+   SELECT
+   tweet,
+   (
+       SELECT COUNT(like_id)
+       FROM like
+       WHERE tweet_id=tweet.tweet_id
+   ) AS likes,
+   (
+       SELECT COUNT(reply_id)
+       FROM reply
+       WHERE tweet_id=tweet.tweet_id
+   ) AS replies,
+   date_time AS dateTime
+   FROM tweet
+   WHERE user_id= ${getUserId.user_id};
+   `;
+  const tweetsQueryResponse = await database.all(tweetsQuery);
+  response.send(tweetsQueryResponse);
 });
+  
 
 //api10
 app.post("/user/tweets/", authenticationToken, async (request, response) => {
